@@ -50,16 +50,18 @@ function embaralharString(str) {
 }
 
 function gerarSenhas() {
+
     const length = parseInt(document.getElementById("length").value);
     const quantity = parseInt(document.getElementById("quantity").value);
     const excludeChars = document.getElementById("exclude").value;
-    
+
     const useUpper = document.getElementById("chk-upper").checked;
     const useLower = document.getElementById("chk-lower").checked;
     const useNumbers = document.getElementById("chk-numbers").checked;
-    const useSymbols = document.getElementById("chk-symbols").checked;
+    const useBasicSymbols = document.getElementById("chk-basic-symbols").checked;
+    const useExtendedSymbols = document.getElementById("chk-extended-symbols").checked;
 
-    if (!useUpper && !useLower && !useNumbers && !useSymbols) {
+    if (!useUpper && !useLower && !useNumbers && !useBasicSymbols && !useExtendedSymbols) {
         mostrarMensagem("Selecione pelo menos um tipo de caractere!");
         return;
     }
@@ -72,50 +74,82 @@ function gerarSenhas() {
     let resultados = [];
 
     for (let i = 0; i < quantity; i++) {
-        let senha = gerarSenhaUnica(length, useUpper, useLower, useNumbers, useSymbols, excludeChars);
+        let senha = gerarSenhaUnica(
+            length,
+            useUpper,
+            useLower,
+            useNumbers,
+            useBasicSymbols,
+            useExtendedSymbols,
+            excludeChars
+        );
+
         resultados.push(senha);
-        
         historicoDeSenhas.unshift(senha);
     }
 
     const campoSenha = document.getElementById("password");
     campoSenha.value = resultados.join('\n');
-    
     campoSenha.rows = resultados.length > 5 ? 5 : resultados.length;
 
     atualizarInterfaceHistorico();
-    copiarParaAreaDeTransferencia(campoSenha.value, "Senha(s) copiada(s)");
+    copiarParaAreaDeTransferencia(campoSenha.value, "Senha(s) copiada(s)!");
 }
 
-function gerarSenhaUnica(length, useUpper, useLower, useNum, useSym, excludeStr) {
+function gerarSenhaUnica(length, useUpper, useLower, useNum, useBasicSym, useExtendedSym, excludeStr) {
+
     let upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     let lower = "abcdefghijklmnopqrstuvwxyz";
     let num = "0123456789";
-    let sym = "!@#$%^&*()_+~|}{[]:;?><,./-=";
+    let basicSym = "!@#$%&*";
+    let extendedSym = "\"'´¨{[]}~^/?;:.>,<()-_=+";
 
-    // Filtra os caracteres a serem excluídos
     if (excludeStr) {
         const arrExclusao = excludeStr.split('');
+
         upper = upper.split('').filter(c => !arrExclusao.includes(c)).join('');
         lower = lower.split('').filter(c => !arrExclusao.includes(c)).join('');
         num = num.split('').filter(c => !arrExclusao.includes(c)).join('');
-        sym = sym.split('').filter(c => !arrExclusao.includes(c)).join('');
+        basicSym = basicSym.split('').filter(c => !arrExclusao.includes(c)).join('');
+        extendedSym = extendedSym.split('').filter(c => !arrExclusao.includes(c)).join('');
     }
 
     let charset = "";
     let caracteresGarantidos = [];
 
-    if (useUpper && upper) { charset += upper; caracteresGarantidos.push(upper[randomIndex(upper.length)]); }
-    if (useLower && lower) { charset += lower; caracteresGarantidos.push(lower[randomIndex(lower.length)]); }
-    if (useNum && num) { charset += num; caracteresGarantidos.push(num[randomIndex(num.length)]); }
-    if (useSym && sym) { charset += sym; caracteresGarantidos.push(sym[randomIndex(sym.length)]); }
+    if (useUpper && upper) {
+        charset += upper;
+        caracteresGarantidos.push(upper[randomIndex(upper.length)]);
+    }
 
-    if (charset.length === 0) return "ERRO: Sem caracteres válidos!";
+    if (useLower && lower) {
+        charset += lower;
+        caracteresGarantidos.push(lower[randomIndex(lower.length)]);
+    }
+
+    if (useNum && num) {
+        charset += num;
+        caracteresGarantidos.push(num[randomIndex(num.length)]);
+    }
+
+    if (useBasicSym && basicSym) {
+        charset += basicSym;
+        caracteresGarantidos.push(basicSym[randomIndex(basicSym.length)]);
+    }
+
+    if (useExtendedSym && extendedSym) {
+        charset += extendedSym;
+        caracteresGarantidos.push(extendedSym[randomIndex(extendedSym.length)]);
+    }
+
+    if (charset.length === 0) {
+        return "ERRO: Sem caracteres válidos!";
+    }
 
     let senha = "";
-    
-    for (let i = 0; i < caracteresGarantidos.length; i++) {
-        if(senha.length < length) senha += caracteresGarantidos[i];
+
+    for (let i = 0; i < caracteresGarantidos.length && senha.length < length; i++) {
+        senha += caracteresGarantidos[i];
     }
 
     while (senha.length < length) {
@@ -127,38 +161,27 @@ function gerarSenhaUnica(length, useUpper, useLower, useNum, useSym, excludeStr)
 
 function atualizarInterfaceHistorico() {
     const lista = document.getElementById("history-list");
-    lista.innerHTML = ""; 
+    lista.innerHTML = "";
 
-    // Mantém apenas os últimos 20 no histórico para não pesar
-    if(historicoDeSenhas.length > 20) {
+    if (historicoDeSenhas.length > 20) {
         historicoDeSenhas = historicoDeSenhas.slice(0, 20);
     }
 
     if (historicoDeSenhas.length === 0) {
-        lista.innerHTML = "<li style='color: var(--text-muted); font-size: 12px; text-align: center;'>Nenhuma senha gerada ainda.</li>";
+        lista.innerHTML = "<li style='opacity:0.6;'>Nenhuma senha gerada ainda.</li>";
         return;
     }
 
     historicoDeSenhas.forEach(senha => {
         const li = document.createElement("li");
         li.className = "history-item";
-        
-        // Trunca a visualização se for muito longa, mas cópia a inteira
-        const senhaExibicao = senha.length > 25 ? senha.substring(0, 25) + "..." : senha;
 
         li.innerHTML = `
-            <span>${senhaExibicao}</span>
-            <button title="Copiar esta senha">
-                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
+            <span>${senha}</span>
+            <button onclick="copiarParaAreaDeTransferencia('${senha}', 'Senha copiada!')">
+                Copiar
             </button>
         `;
-        
-        // Adiciona evento de clique no botão de copiar do item do histórico
-        li.querySelector('button').onclick = () => {
-            copiarParaAreaDeTransferencia(senha, "Senha do histórico copiada!");
-        };
 
         lista.appendChild(li);
     });
@@ -167,7 +190,7 @@ function atualizarInterfaceHistorico() {
 function limparHistorico() {
     historicoDeSenhas = [];
     atualizarInterfaceHistorico();
-    mostrarMensagem("Histórico limpo! 🗑️");
+    mostrarMensagem("Histórico limpo!");
 }
 
 function copiarSenhaManualmente() {
@@ -179,45 +202,20 @@ function copiarSenhaManualmente() {
     copiarParaAreaDeTransferencia(senha, "Senha(s) copiada(s)!");
 }
 
-function copiarParaAreaDeTransferencia(texto, mensagemSucesso) {
-    if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(texto).then(() => {
-            mostrarMensagem(mensagemSucesso);
-        }).catch(err => {
-            fallbackCopiar(texto, mensagemSucesso);
-        });
-    } else {
-        fallbackCopiar(texto, mensagemSucesso);
-    }
+function copiarParaAreaDeTransferencia(texto, mensagem) {
+    navigator.clipboard.writeText(texto).then(() => {
+        mostrarMensagem(mensagem);
+    });
 }
 
-function fallbackCopiar(texto, mensagemSucesso) {
-    const tempInput = document.createElement("textarea");
-    tempInput.value = texto;
-    document.body.appendChild(tempInput);
-    tempInput.select();
-    
-    try {
-        document.execCommand("copy");
-        mostrarMensagem(mensagemSucesso);
-    } catch (err) {
-        mostrarMensagem("Erro ao copiar a senha.");
-    }
-    
-    document.body.removeChild(tempInput);
-}
-
-let toastTimeout;
 function mostrarMensagem(texto) {
     const toast = document.getElementById("toast");
     toast.textContent = texto;
     toast.classList.add("show");
-    
-    clearTimeout(toastTimeout);
-    toastTimeout = setTimeout(() => {
+
+    setTimeout(() => {
         toast.classList.remove("show");
     }, 2500);
 }
 
-// Inicializa estado vazio do histórico
 atualizarInterfaceHistorico();
