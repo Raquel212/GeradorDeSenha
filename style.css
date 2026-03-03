@@ -104,7 +104,7 @@ textarea {
     width: 100%;
     background: transparent;
     border: none;
-    padding: 15px 50px 15px 15px;
+    padding: 5px 5px 5px 5px;
     color: var(--primary);
     font-family: 'Fira Code', monospace;
     font-size: 16px;
@@ -115,6 +115,7 @@ textarea {
     min-height: 60px;
     max-height: 150px;
     line-height: 1.5;
+    margin-top: 15px;
 }
 
 textarea::placeholder {
@@ -149,6 +150,7 @@ textarea::placeholder {
 .copy-btn svg {
     width: 20px;
     height: 20px;
+    margin-top: 8px;
 }
 
 /* Controles e Filtros */
@@ -192,6 +194,10 @@ textarea::placeholder {
     border-color: var(--primary);
 }
 
+/* ==============================
+    CHECKBOXES PADRÃO UNIFICADO
+================================= */
+
 .checkbox-group {
     display: flex;
     align-items: center;
@@ -199,10 +205,12 @@ textarea::placeholder {
     font-size: 14px;
     cursor: pointer;
     user-select: none;
+    grid-column: span 2; 
 }
 
 .checkbox-group input[type="checkbox"] {
     appearance: none;
+    -webkit-appearance: none;
     width: 18px;
     height: 18px;
     border: 1px solid var(--border-color);
@@ -210,6 +218,11 @@ textarea::placeholder {
     background: rgba(0,0,0,0.2);
     cursor: pointer;
     position: relative;
+    transition: all 0.2s ease;
+}
+
+.checkbox-group input[type="checkbox"]:hover {
+    border-color: var(--primary);
 }
 
 .checkbox-group input[type="checkbox"]:checked {
@@ -222,6 +235,7 @@ textarea::placeholder {
     position: absolute;
     color: #000;
     font-size: 12px;
+    font-weight: bold;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
